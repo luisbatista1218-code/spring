@@ -90,41 +90,42 @@ async function checkTelegramUpdates() {
     const data = await response.json();
 
     if (data.ok && data.result.length > 0) {
-      for (const update of data.result) {
-
-        // Comandos de texto
+      data.result.forEach(update => {
+        // Mensagens de texto (/status)
         if (update.message && update.message.text) {
           const text = update.message.text;
           const commandId = `${update.update_id}_${text}`;
+
           if (text.startsWith('/status') && !processedCommands.has(commandId)) {
             processedCommands.add(commandId);
             processarComandoStatus(text);
           }
         }
 
-        // Cliques nos botões
+        // Cliques nos botões inline
         if (update.callback_query && update.callback_query.data) {
-          const dataCb = update.callback_query.data;
-          const commandId = `${update.update_id}_${dataCb}`;
-          if (dataCb.startsWith('status') && !processedCommands.has(commandId)) {
-            processedCommands.add(commandId);
-            processarComandoStatus(`/${dataCb}`);
+          const callbackData = update.callback_query.data;
+          const commandId = `${update.update_id}_${callbackData}`;
 
-            // Resposta visual ao usuário
-            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                callback_query_id: update.callback_query.id,
-                text: '✅ Status atualizado!',
-                show_alert: false
-              })
-            });
+          if (callbackData.startsWith('status') && !processedCommands.has(commandId)) {
+            processedCommands.add(commandId);
+            processarComandoStatus(`/${callbackData}`);
           }
+
+          // Resposta visual sem alterar os botões
+          fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              callback_query_id: update.callback_query.id,
+              text: '✅ Status atualizado!',
+              show_alert: false
+            })
+          });
         }
 
         lastUpdateId = update.update_id;
-      }
+      });
     }
   } catch (error) {
     console.error('Erro ao verificar atualizações:', error);
@@ -185,6 +186,7 @@ function atualizarStatusPedido(codigo, novoStatus) {
   }
 }
 
+
 async function sendTelegramNotification(pedido) {
   const message = `📦 *PEDIDO #${pedido.codigo}* - ${pedido.status}\n\n💰 *Total:* R$ ${pedido.total.toFixed(2)}\n📍 *Endereço:* ${pedido.local}\n📱 *Telefone:* ${pedido.whatsapp}\n📋 *Itens:* ${pedido.produtos.map(p => `${p.nome} (x${p.qtd})`).join(', ')}\n⏰ *Data:* ${pedido.data}`;
 
@@ -203,7 +205,8 @@ async function sendTelegramNotification(pedido) {
   };
 
   try {
-    const messageResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    const messageUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+    const messageResponse = await fetch(messageUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -219,7 +222,7 @@ async function sendTelegramNotification(pedido) {
       messageIds[pedido.codigo] = messageResult.result.message_id;
     }
 
-    // Envia mapa e comprovante **depois** da mensagem principal
+    // Mantém envio de localização e comprovante
     if (pedido.mapaUrl) await sendLocalizacaoToTelegram(pedido);
     if (pedido.comprovante) await sendComprovanteToTelegram(pedido);
 
@@ -691,35 +694,67 @@ function showDadosEntrega(localizacaoData) {
     const whatsapp = document.getElementById('whatsapp').value;
     const endereco = document.getElementById('endereco').value;
     const complemento = document.getElementById('complemento').value;
-    const mapaUrl = document.getElementById('mapaUrl').value;                                               
+    const mapaUrl = document.getElementById('mapaUrl').value;
+
     if (!whatsapp || !endereco) {
-      alert('Por favor, preencha todos os campos obrigatórios.');                                                 return;
-    }                                                 
-    if (whatsapp.replace(/\D/g, '').length < 10) {          alert('Por favor, insira um telefone válido com DDD.');
+      alert('Por favor, preencha todos os campos obrigatórios.');
       return;
-    }                                                                                                           showUploadComprovante({                                 endereco: endereco,
-      mapaUrl: mapaUrl,                                     whatsapp: whatsapp
-    }, complemento);                                    };                                                  }
-                                                      function showUploadComprovante(localizacaoData, descricao) {
-  currentView = 'checkout';                             let selectedFile = null;                              const totalPedido = cart.reduce((total, item) => total + (item.preco * item.qtd), 0);                     
+    }
+
+    if (whatsapp.replace(/\D/g, '').length < 10) {
+      alert('Por favor, insira um telefone válido com DDD.');
+      return;
+    }
+
+    showUploadComprovante({
+      endereco: endereco,
+      mapaUrl: mapaUrl,
+      whatsapp: whatsapp
+    }, complemento);
+  };
+}
+
+function showUploadComprovante(localizacaoData, descricao) {
+  currentView = 'checkout';
+  let selectedFile = null;
+  const totalPedido = cart.reduce((total, item) => total + (item.preco * item.qtd), 0);
+
   const mapaHtml = localizacaoData.mapaUrl ?
-    `<p><strong>📍 Localização no mapa:</strong> <a href="${localizacaoData.mapaUrl}" target="_blank">Abrir no Google Maps</a></p>` :                                 '';                                               
-  const html = `                                          <div class="card">
-      <h3>📋 Resumo do Pedido</h3>                          <p><strong>📱 Telefone:</strong> ${localizacaoData.whatsapp}</p>
-      <p><strong>📍 Endereço:</strong> ${localizacaoData.endereco}</p>                                            ${mapaHtml}
-      <p><strong>📝 Complemento:</strong> ${descricao || 'Nenhum'}</p>                                            <p><strong>💰 Total:</strong> R$ ${totalPedido.toFixed(2)}</p>                                            </div>
+    `<p><strong>📍 Localização no mapa:</strong> <a href="${localizacaoData.mapaUrl}" target="_blank">Abrir no Google Maps</a></p>` :
+    '';
 
-    <div class="pix-info">                                  <h3>💳 Pagamento PIX</h3>
-      <p><strong>Chave PIX:</strong> 123.456.789-00</p>                                                           <p><strong>Valor:</strong> R$ ${totalPedido.toFixed(2)}</p>
-      <p><strong>Beneficiário:</strong> Delivery Express</p>                                                      <p><em>Envie o comprovante do pagamento PIX abaixo</em></p>                                               </div>
-                                                          <div class="card">                                      <h3>📎 Enviar Comprovante de Pagamento PIX</h3>       <p>Envie uma foto ou PDF do comprovante (máximo 2 MB)</p>
+  const html = `
+    <div class="card">
+      <h3>📋 Resumo do Pedido</h3>
+      <p><strong>📱 Telefone:</strong> ${localizacaoData.whatsapp}</p>
+      <p><strong>📍 Endereço:</strong> ${localizacaoData.endereco}</p>
+      ${mapaHtml}
+      <p><strong>📝 Complemento:</strong> ${descricao || 'Nenhum'}</p>
+      <p><strong>💰 Total:</strong> R$ ${totalPedido.toFixed(2)}</p>
+    </div>
 
-      <div class="upload-area" id="uploadArea">               <p>📁 Arraste o arquivo aqui ou clique para selecionar</p>
+    <div class="pix-info">
+      <h3>💳 Pagamento PIX</h3>
+      <p><strong>Chave PIX:</strong> 123.456.789-00</p>
+      <p><strong>Valor:</strong> R$ ${totalPedido.toFixed(2)}</p>
+      <p><strong>Beneficiário:</strong> Delivery Express</p>
+      <p><em>Envie o comprovante do pagamento PIX abaixo</em></p>
+    </div>
+
+    <div class="card">
+      <h3>📎 Enviar Comprovante de Pagamento PIX</h3>
+      <p>Envie uma foto ou PDF do comprovante (máximo 2 MB)</p>
+
+      <div class="upload-area" id="uploadArea">
+        <p>📁 Arraste o arquivo aqui ou clique para selecionar</p>
         <input type="file" id="fileInput" accept="image/*,.pdf" style="display: none">
         <button class="btn" onclick="document.getElementById('fileInput').click()">Selecionar Arquivo</button>
-      </div>                                                                                                      <div id="fileInfo"></div>
+      </div>
 
-      <div class="finalizar-btn-container">                   <button class="btn" id="submitBtn" disabled onclick="finalizarPedidoComComprovante('${localizacaoData.endereco.replace(/'/g, "\\'")}', '${(descricao || '').replace(/'/g, "\\'")}', '${localizacaoData.mapaUrl.replace(/'/g, "\\'")}', '${localizacaoData.whatsapp.replace(/'/g, "\\'")}')" style="width: 100%; padding: 15px; font-size: 18px;">✅ Finalizar Pedido</button>
+      <div id="fileInfo"></div>
+
+      <div class="finalizar-btn-container">
+        <button class="btn" id="submitBtn" disabled onclick="finalizarPedidoComComprovante('${localizacaoData.endereco.replace(/'/g, "\\'")}', '${(descricao || '').replace(/'/g, "\\'")}', '${localizacaoData.mapaUrl.replace(/'/g, "\\'")}', '${localizacaoData.whatsapp.replace(/'/g, "\\'")}')" style="width: 100%; padding: 15px; font-size: 18px;">✅ Finalizar Pedido</button>
       </div>
       <button class="btn-ghost" onclick="showDadosEntrega({endereco: '${localizacaoData.endereco.replace(/'/g, "\\'")}', mapaUrl: '${localizacaoData.mapaUrl.replace(/'/g, "\\'")}'})">← Voltar</button>
     </div>
@@ -728,15 +763,18 @@ function showDadosEntrega(localizacaoData) {
   document.getElementById('view').innerHTML = html;
 
   const fileInput = document.getElementById('fileInput');
-  const uploadArea = document.getElementById('uploadArea');                                                   const fileInfo = document.getElementById('fileInfo');
+  const uploadArea = document.getElementById('uploadArea');
+  const fileInfo = document.getElementById('fileInfo');
   const submitBtn = document.getElementById('submitBtn');
 
-  uploadArea.addEventListener('dragover', (e) => {        e.preventDefault();
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
     uploadArea.classList.add('active');
   });
 
   uploadArea.addEventListener('dragleave', () => {
-    uploadArea.classList.remove('active');              });
+    uploadArea.classList.remove('active');
+  });
 
   uploadArea.addEventListener('drop', (e) => {
     e.preventDefault();
@@ -748,14 +786,17 @@ function showDadosEntrega(localizacaoData) {
 
   fileInput.addEventListener('change', (e) => {
     if (e.target.files.length) {
-      handleFileSelect(e.target.files[0]);                }                                                   });
+      handleFileSelect(e.target.files[0]);
+    }
+  });
 
   function handleFileSelect(file) {
     if (file.size > 2 * 1024 * 1024) {
       alert('❌ Arquivo muito grande! Máximo 2 MB permitido.');
       return;
     }
-                                                          if (!file.type.match('image.*') && !file.type.match('application.pdf')) {
+
+    if (!file.type.match('image.*') && !file.type.match('application.pdf')) {
       alert('❌ Formato não permitido! Apenas imagens ou PDF.');
       return;
     }
@@ -763,14 +804,16 @@ function showDadosEntrega(localizacaoData) {
     selectedFile = file;
 
     const fileSize = (file.size / 1024 / 1024).toFixed(2);
-    fileInfo.innerHTML = `                                  <div class="file-info">
+    fileInfo.innerHTML = `
+      <div class="file-info">
         <strong>📄 ${file.name}</strong><br>
         Tipo: ${file.type}<br>
         Tamanho: ${fileSize} MB<br>
         ✅ Arquivo pronto para envio
       </div>
     `;
-                                                          submitBtn.disabled = false;
+
+    submitBtn.disabled = false;
     submitBtn.classList.remove('btn-disabled');
   }
 
@@ -779,8 +822,10 @@ function showDadosEntrega(localizacaoData) {
       alert('❌ Selecione um arquivo de comprovante primeiro!');
       return;
     }
-                                                          const reader = new FileReader();
-    reader.onload = async function(e) {                     const comprovanteBase64 = e.target.result;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const comprovanteBase64 = e.target.result;
 
       let codigoPedido = Math.floor(Math.random() * 900 + 100);
       let totalPedido = cart.reduce((total, item) => total + (item.preco * item.qtd), 0);
@@ -793,7 +838,8 @@ function showDadosEntrega(localizacaoData) {
         mapaUrl: mapaUrl,
         desc: descricao || '',
         whatsapp: whatsapp,
-        comprovante: comprovanteBase64,                       comprovanteNome: selectedFile.name,
+        comprovante: comprovanteBase64,
+        comprovanteNome: selectedFile.name,
         comprovanteTipo: selectedFile.type,
         data: new Date().toLocaleString('pt-BR'),
         status: 'Pedido recebido - Aguardando confirmação do pagamento'
@@ -816,13 +862,15 @@ function showDadosEntrega(localizacaoData) {
       alert(`✅ Pedido #${pedido.codigo} confirmado!\n📱 Notificação enviada para o administrador\n💰 Total: R$ ${totalPedido.toFixed(2)}\n📍 Entrega em: ${localizacao}\n\n💎 Use o botão "Nota Fiscal" para baixar seus pedidos!`);
 
       cart = [];
-      saveToStorage();                                      showHome();
+      saveToStorage();
+      showHome();
     };
 
     reader.onerror = function() {
       alert('❌ Erro ao ler o arquivo. Tente novamente.');
     };
-                                                          reader.readAsDataURL(selectedFile);
+
+    reader.readAsDataURL(selectedFile);
   };
 }
 
@@ -842,10 +890,16 @@ function showNotifs(){
         notif.status.includes('Pagamento confirmado') ||
         notif.status.includes('entregue') ||
         notif.status.includes('entregue')
-      );                                              
-      html += `<div class='card'>                             <b>Pedido #${notif.codigo}</b>                        <div>${notif.msg}</div>                               <small>${notif.data}</small>                          ${podeBaixar ? `<button class="btn" onclick="baixarNotaFiscalIndividual(${notif.codigo})" style="margin-top: 10px;">📄 Baixar Nota Fiscal</button>` : ''}
+      );
+
+      html += `<div class='card'>
+        <b>Pedido #${notif.codigo}</b>
+        <div>${notif.msg}</div>
+        <small>${notif.data}</small>
+        ${podeBaixar ? `<button class="btn" onclick="baixarNotaFiscalIndividual(${notif.codigo})" style="margin-top: 10px;">📄 Baixar Nota Fiscal</button>` : ''}
       </div>`;
-    });                                                 }
+    });
+  }
 
   document.getElementById('view').innerHTML = html;
 }
@@ -861,9 +915,11 @@ window.decQty = decQty;
 window.clearCart = clearCart;
 window.startCheckout = startCheckout;
 window.openContact = openContact;
-window.goBack = goBack;                               window.exportarNotaFiscal = exportarNotaFiscal;
+window.goBack = goBack;
+window.exportarNotaFiscal = exportarNotaFiscal;
 window.baixarNotaFiscalIndividual = baixarNotaFiscalIndividual;
-                                                      loadFromStorage();
+
+loadFromStorage();
 showHome();
 </script>
 
