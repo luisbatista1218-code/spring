@@ -14,7 +14,7 @@
   .nav {position:fixed;bottom:0;left:0;right:0;background:#3a0060;padding:10px;display:flex;justify-content:space-around;}
   .nav button {background:#fff;color:#3a0060;border:none;padding:12px 14px;border-radius:10px;cursor:pointer;font-weight:bold;}
   .card {background:#fff;color:#000;padding:12px;border-radius:10px;margin:10px 0;box-shadow:0 4px 6px rgba(0,0,0,0.2);}
-  .card img {width:100%;height:180px;object-fit:cover;border-radius:8px;}
+  .card img {width:100%;height:auto;max-height:200px;object-fit:cover;border-radius:8px;aspect-ratio:16/9;}
   .card button {cursor:pointer;}
   .loading {color: #fff; text-align: center; padding: 25px; font-size:18px;}
   .upload-area {border: 2px dashed #ccc; padding: 25px; text-align: center; margin: 12px 0; border-radius: 10px; transition:0.3s;}
@@ -78,6 +78,7 @@ let unreadNotifications = 0;
 let categories = ["Pizza", "Bebidas", "Sobremesas"];
 let products = [
   {id:1,categoria:"Pizza",nome:"Pizza Calabresa",descricao:"Pizza com borda de requeijão",preco:30.00,imagem:"pizza-calabresa.jpg"}
+  {id:2,categoria:"Bebidas",nome:"Coca de 2 litros",descricao:"Refrigerante coca cola de 2 litros",preco:12.00,imagem:"coca-grande.jpg"}
 ];
 let lastUpdateId = 0;
 let messageIds = {};
