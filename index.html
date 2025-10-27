@@ -85,6 +85,7 @@ let products = [
 let lastUpdateId = 0;
 let messageIds = {};
 let processedCommands = new Set();
+let lastLocalizacaoData = null;
 
 async function checkTelegramUpdates() {
   try {
@@ -458,10 +459,17 @@ function baixarNotaFiscalIndividual(codigo) {
 }
 
 function goBack(){
- if (currentView === 'upload-comprovante') {
-  showDadosEntrega();
-  return;
-}
+  if (currentView === 'upload-comprovante') {
+    if (lastLocalizacaoData) {
+      showDadosEntrega({
+        endereco: lastLocalizacaoData.endereco,
+        mapaUrl: lastLocalizacaoData.mapaUrl
+      });
+    } else {
+      showDadosEntrega();
+    }
+    return;
+  }
   if(currentView === 'checkout') {
     showDadosEntrega();
     return;
@@ -739,6 +747,8 @@ function showDadosEntrega(localizacaoData) {
 function showUploadComprovante(localizacaoData, descricao) {
   currentView = 'upload-comprovante';
   currentView = 'checkout';
+  lastLocalizacaoData = localizacaoData;
+
   let selectedFile = null;
   const totalPedido = cart.reduce((total, item) => total + (item.preco * item.qtd), 0);
   
