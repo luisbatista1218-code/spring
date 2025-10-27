@@ -458,11 +458,11 @@ function baixarNotaFiscalIndividual(codigo) {
 }
 
 function goBack(){
-if(currentView === 'checkout') {
-  showDadosEntrega();
-} 
-else if(currentView === 'dados-entrega') {
+if(currentView === 'dados-entrega') {
   showCart();
+} 
+else if(currentView === 'checkout') {
+  showDadosEntrega();
   }
 else if(currentView === 'categories' || currentView === 'category-products' || currentView === 'cart' || currentView === 'notifs'){
     showHome();
