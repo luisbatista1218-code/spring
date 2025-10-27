@@ -771,11 +771,7 @@ function showUploadComprovante(localizacaoData, descricao) {
       
       <div class="finalizar-btn-container">
         <button class="btn" id="submitBtn" disabled onclick="finalizarPedidoComComprovante('${localizacaoData.endereco.replace(/'/g, "\\'")}', '${(descricao || '').replace(/'/g, "\\'")}', '${localizacaoData.mapaUrl.replace(/'/g, "\\'")}', '${localizacaoData.whatsapp.replace(/'/g, "\\'")}')" style="width: 100%; padding: 15px; font-size: 18px;">✅ Finalizar Pedido</button>
-      </div>
-    <button class="btn-ghost" onclick="goBack()">← Voltar</button>
-      //<button class="btn-ghost" onclick="showDadosEntrega({endereco: '${localizacaoData.endereco.replace(/'/g, "\\'")}', mapaUrl: '${localizacaoData.mapaUrl.replace(/'/g, "\\'")}'})">← Voltar</button>
-    </div>
-  `;
+      </div> `;
   
   document.getElementById('view').innerHTML = html;
   
