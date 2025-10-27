@@ -458,6 +458,10 @@ function baixarNotaFiscalIndividual(codigo) {
 }
 
 function goBack(){
+ if (currentView === 'upload-comprovante') {
+  showDadosEntrega();
+  return;
+}
   if(currentView === 'checkout') {
     showDadosEntrega();
     return;
@@ -733,6 +737,7 @@ function showDadosEntrega(localizacaoData) {
 }
 
 function showUploadComprovante(localizacaoData, descricao) {
+  currentView = 'upload-comprovante';
   currentView = 'checkout';
   let selectedFile = null;
   const totalPedido = cart.reduce((total, item) => total + (item.preco * item.qtd), 0);
