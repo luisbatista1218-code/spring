@@ -403,7 +403,7 @@ function gerarNotaFiscal(pedido) {
     comprovante: pedido.comprovante ? "Enviado" : "Não enviado"
   };
 }
-
+/*
 function exportarNotaFiscal() {
   const pedidosPagos = orders.filter(pedido => 
     pedido.status.includes('Pagamento confirmado') || 
@@ -428,7 +428,38 @@ function exportarNotaFiscal() {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-}
+}*/
+function exportarNotaFiscal() {
+  const pedidosPagos = orders.filter(pedido => 
+    pedido.status.includes('Pagamento confirmado')
+  );
+  
+  if (pedidosPagos.length === 0) {
+    alert('Nenhum pedido com pagamento confirmado encontrado!');
+    return;
+  }
+
+  // Se só tiver 1 pedido, usa a função individual
+  if (pedidosPagos.length === 1) {
+    baixarNotaFiscalIndividual(pedidosPagos[0].codigo);
+    return;
+  }
+
+  // Se tiver múltiplos, baixa todos juntos
+  let htmlCompleto = `<h1>📊 Notas Fiscais - Pagos</h1>`;
+  
+  pedidosPagos.forEach(pedido => {
+    htmlCompleto += criarNotaFiscalHTML(gerarNotaFiscal(pedido));
+  });
+
+  // Download do HTML completo
+  const blob = new Blob([htmlCompleto], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `notas-fiscais-pagas.html`;
+  link.click();
+  }
 /*
 function baixarNotaFiscalIndividual(codigo) {
   const pedido = orders.find(o => o.codigo === codigo);
