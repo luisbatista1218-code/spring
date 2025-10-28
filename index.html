@@ -439,55 +439,88 @@ function exportarNotaFiscal() {
     return;
   }
 
-  // Se só tiver 1 pedido, usa a função individual
+  // Se só tiver 1 pedido, baixa individual
   if (pedidosPagos.length === 1) {
     baixarNotaFiscalIndividual(pedidosPagos[0].codigo);
     return;
   }
 
-  // Se tiver múltiplos, baixa todos juntos
-  let htmlCompleto = `<h1>📊 Notas Fiscais - Pagos</h1>`;
-  
+  // Para múltiplos pedidos, cria HTML com todos
+  let htmlCompleto = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .nota { margin-bottom: 40px; padding: 20px; border: 2px solid #3a0060; border-radius: 10px; }
+        .header { text-align: center; border-bottom: 2px solid #3a0060; padding-bottom: 15px; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f5f5f5; }
+        .total { font-weight: bold; color: #3a0060; font-size: 18px; text-align: right; margin-top: 10px; }
+        .cliente-info { background: #f9f9f9; padding: 10px; border-radius: 5px; margin: 10px 0; }
+      </style>
+    </head>
+    <body>
+      <h1 style="text-align: center; color: #3a0060;">📊 NOTAS FISCAIS - PAGAMENTOS CONFIRMADOS</h1>
+  `;
+
   pedidosPagos.forEach(pedido => {
-    htmlCompleto += criarNotaFiscalHTML(gerarNotaFiscal(pedido));
+    const dados = gerarNotaFiscal(pedido);
+    
+    htmlCompleto += `
+      <div class="nota">
+        <div class="header">
+          <h2>🍕 NOTA FISCAL #${dados.codigo}</h2>
+          <p><strong>Data:</strong> ${dados.data} | <strong>Status:</strong> ${dados.status}</p>
+        </div>
+        
+        <div class="cliente-info">
+          <p><strong>📱 Cliente:</strong> ${dados.cliente.telefone}</p>
+          <p><strong>📍 Endereço:</strong> ${dados.cliente.endereco}</p>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Qtd</th>
+              <th>Valor Unit.</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${dados.itens.map(item => `
+              <tr>
+                <td>${item.nome}</td>
+                <td>${item.quantidade}</td>
+                <td>R$ ${item.preco_unitario.toFixed(2)}</td>
+                <td>R$ ${item.subtotal.toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="total">TOTAL: R$ ${dados.totais.total.toFixed(2)}</div>
+      </div>
+    `;
   });
 
-  // Download do HTML completo
+  htmlCompleto += `</body></html>`;
+
+  // Faz download
   const blob = new Blob([htmlCompleto], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `notas-fiscais-pagas.html`;
-  link.click();
-  }
-/*
-function baixarNotaFiscalIndividual(codigo) {
-  const pedido = orders.find(o => o.codigo === codigo);
-  if (!pedido) {
-    alert('Pedido não encontrado!');
-    return;
-  }
-
-  if (!pedido.status.includes('Pagamento confirmado') && 
-      !pedido.status.includes('entregue') &&
-      !pedido.status.includes('entregue')) {
-    alert('Nota fiscal só disponível para pedidos com pagamento confirmado!');
-    return;
-  }
-  
-  const notaFiscal = gerarNotaFiscal(pedido);
-  const dataStr = JSON.stringify(notaFiscal, null, 2);
-  const dataBlob = new Blob([dataStr], {type: 'application/json'});
-  
-  const url = URL.createObjectURL(dataBlob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `nota-fiscal-${codigo}.json`;
+  link.download = `notas-fiscais-pagas-${new Date().toISOString().split('T')[0]}.html`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-} */
+  }
+
 function baixarNotaFiscalIndividual(codigo) {
   const pedido = orders.find(o => o.codigo === codigo);
   if (!pedido) {
