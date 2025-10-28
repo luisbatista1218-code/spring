@@ -978,8 +978,6 @@ function showNotifs(){
     notifications.slice().reverse().forEach(notif => {
       const podeBaixar = notif.status && (
         notif.status.includes('Pagamento confirmado') || 
-        notif.status.includes('entregue') ||
-        notif.status.includes('entregue')
       );
       
       html += `<div class='card'>
