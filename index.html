@@ -429,7 +429,7 @@ function exportarNotaFiscal() {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
-
+/*
 function baixarNotaFiscalIndividual(codigo) {
   const pedido = orders.find(o => o.codigo === codigo);
   if (!pedido) {
@@ -456,8 +456,73 @@ function baixarNotaFiscalIndividual(codigo) {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-}
+} */
+function baixarNotaFiscalIndividual(codigo) {
+  const pedido = orders.find(o => o.codigo === codigo);
+  if (!pedido) {
+    alert('Pedido não encontrado!');
+    return;
+  }
 
+  // Cria conteúdo HTML bonito
+  const notaHTML = `
+    <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
+      <div style="text-align: center; border-bottom: 2px solid #3a0060; padding-bottom: 15px; margin-bottom: 20px;">
+        <h1 style="color: #3a0060; margin: 0;">🍕 NOTA FISCAL</h1>
+        <p style="margin: 5px 0;"><strong>Delivery Express</strong></p>
+        <p style="margin: 5px 0; font-size: 14px;">CNPJ: 12.345.678/0001-90</p>
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <p><strong>Pedido:</strong> #${pedido.codigo}</p>
+        <p><strong>Data:</strong> ${pedido.data}</p>
+        <p><strong>Status:</strong> ${pedido.status}</p>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+        <thead>
+          <tr style="background: #f5f5f5;">
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Item</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Qtd</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Valor</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pedido.produtos.map(item => `
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 8px;">${item.nome}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.qtd}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">R$ ${item.preco.toFixed(2)}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">R$ ${(item.preco * item.qtd).toFixed(2)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+
+      <div style="text-align: right; font-size: 18px; font-weight: bold; color: #3a0060; margin-top: 20px;">
+        TOTAL: R$ ${pedido.total.toFixed(2)}
+      </div>
+
+      <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 15px;">
+        <p>Obrigado pela preferência! 🎉</p>
+        <p>Telefone: (11) 99999-9999 | delivery@express.com</p>
+      </div>
+    </div>
+  `;
+
+  // Cria e baixa o arquivo
+  const blob = new Blob([notaHTML], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `nota-fiscal-${pedido.codigo}.html`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  }
+  
 function goBack(){
   if (currentView === 'checkout') {
     if (lastLocalizacaoData) {
