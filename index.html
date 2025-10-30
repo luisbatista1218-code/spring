@@ -331,7 +331,7 @@ async function sendTelegramNotification(pedido) {
 
 async function sendLocalizacaoToTelegram(pedido) {
   try {
-    const message = `📍 *LOCALIZAÇÃO DO PEDIDO #${pedido.codigo}*\n\n🗺️ [Abrir no Google Maps](${pedido.mapaUrl})\n📱 Cliente: ${pedido.whatsapp}\n🏠 Endereço: ${pedido.local}`;
+    const message = `📍 *LOCALIZAÇÃO DO PEDIDO #${pedido.codigo}*\n\n🗺️ [Abrir no Google Maps](${pedido.mapaUrl})`;
 
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
     const response = await fetch(url, {
@@ -403,32 +403,8 @@ function gerarNotaFiscal(pedido) {
     comprovante: pedido.comprovante ? "Enviado" : "Não enviado"
   };
 }
-/*
-function exportarNotaFiscal() {
-  const pedidosPagos = orders.filter(pedido => 
-    pedido.status.includes('Pagamento confirmado') || 
-    pedido.status.includes('entregue') ||
-    pedido.status.includes('entregue')
-  );
+
   
-  if (pedidosPagos.length === 0) {
-    alert('Nenhum pedido pago encontrado! A nota fiscal só está disponível para pedidos com pagamento confirmado.');
-    return;
-  }
-  
-  const notasFiscais = pedidosPagos.map(pedido => gerarNotaFiscal(pedido));
-  const dataStr = JSON.stringify(notasFiscais, null, 2);
-  const dataBlob = new Blob([dataStr], {type: 'application/json'});
-  
-  const url = URL.createObjectURL(dataBlob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `notas-fiscais-${new Date().toISOString().split('T')[0]}.json`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}*/
 function exportarNotaFiscal() {
   const pedidosPagos = orders.filter(pedido => 
     pedido.status.includes('Pagamento confirmado')
