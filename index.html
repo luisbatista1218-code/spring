@@ -364,7 +364,7 @@ async function sendComprovanteToTelegram(pedido) {
     const formData = new FormData();
     formData.append('chat_id', CHAT_ID);
     formData.append('document', blob, pedido.comprovanteNome);
-    formData.append('caption', `📎 COMPROVANTE PEDIDO #${pedido.codigo}\n💳 Valor: R$ ${pedido.total.toFixed(2)}\n📱 Cliente: ${pedido.whatsapp}`);
+    formData.append('caption', `📎 COMPROVANTE PEDIDO #${pedido.codigo}\n💳 Valor: R$ ${pedido.total.toFixed(2)}`);
 
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`;
     const response = await fetch(url, {
