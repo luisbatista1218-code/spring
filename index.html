@@ -472,7 +472,7 @@ function gerarNotaFiscal(pedido) {
   
 function exportarNotaFiscal() {
   const pedidosPagos = orders.filter(pedido => 
-    pedido.status.includes('Pagamento confirmado')
+    pedido.status.includes('✅️ Pagamento confirmado')
   );
   
   if (pedidosPagos.length === 0) {
