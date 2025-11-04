@@ -101,7 +101,7 @@ async function checkTelegramUpdates() {
           
           if (data.startsWith('status_') && !processedCommands.has(commandId)) {
             processedCommands.add(commandId);
-            processarCallbackStatus(data);
+            processarCallbackStatus(data, update.callback_query);
           }
         }
         lastUpdateId = update.update_id;
@@ -111,7 +111,7 @@ async function checkTelegramUpdates() {
     console.error('Erro ao verificar atualizações:', error);
   }
 }
-
+/*
 function processarCallbackStatus(data) {
   const match = data.match(/status_(\d+)_(\w+)/);
   if (match) {
@@ -130,8 +130,73 @@ function processarCallbackStatus(data) {
       atualizarStatusPedido(codigo, novoStatus);
     }
   }
+}*/
+
+const pedidosBloqueados = new Set(); // impede cliques repetidos no mesmo pedido
+
+async function processarCallbackStatus(data, callbackObj) {
+  const match = data.match(/status_(\d+)_(\w+)/);
+  if (!match) return;
+
+  const codigo = parseInt(match[1]);
+  const novoStatus = match[2].toLowerCase();
+  const chave = `pedido_${codigo}`;
+
+  // Se o pedido já foi marcado como finalizado (entregue/cancelado)
+  if (pedidosBloqueados.has(chave)) {
+    // responde pro Telegram pra tirar o spinner do botão
+    if (callbackObj?.id) {
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          callback_query_id: callbackObj.id,
+          text: 'Este pedido já foi concluído.',
+          show_alert: false
+        })
+      });
+    }
+    console.log(`Ignorado: ${chave} já bloqueado`);
+    return;
+  }
+
+  // Mapeia status válidos
+  const statusMap = {
+    'pago': '✅ Pagamento confirmado',
+    'preparando': '👨‍🍳 Preparando pedido',
+    'entrega': '🚚 Saiu para entrega',
+    'entregue': '🎉 Pedido entregue',
+    'cancelado': '❌ Pedido cancelado'
+  };
+
+  const textoStatus = statusMap[novoStatus];
+  if (!textoStatus) return;
+
+  // Bloqueia caso o status seja final (entregue ou cancelado)
+  if (novoStatus === 'entregue' || novoStatus === 'cancelado') {
+    pedidosBloqueados.add(chave);
+  }
+
+  // Atualiza normalmente
+  atualizarStatusPedido(codigo, textoStatus);
+
+  // ACK rápido pro Telegram
+  if (callbackObj?.id) {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        callback_query_id: callbackObj.id,
+        text: `Status atualizado: ${textoStatus}`,
+        show_alert: false
+      })
+    });
+  }
+
+  console.log(`Status de ${codigo} atualizado para: ${textoStatus}`);
 }
 
+  
 function atualizarStatusPedido(codigo, novoStatus) {
   const pedido = orders.find(o => o.codigo === codigo);
   if (pedido && pedido.status !== novoStatus) {
