@@ -464,7 +464,7 @@ function gerarNotaFiscal(pedido) {
       subtotal: pedido.produtos.reduce((sum, item) => sum + (item.preco * item.qtd), 0),
       total: pedido.total
     },
-    status: "✅ Pagamento confirmado",
+    status: "Pagamento confirmado",
     comprovante: pedido.comprovante ? "Enviado" : "Não enviado"
   };
 }
@@ -472,7 +472,7 @@ function gerarNotaFiscal(pedido) {
   
 function exportarNotaFiscal() {
   const pedidosPagos = orders.filter(pedido => 
-    pedido.status.includes('✅️ Pagamento confirmado')
+    pedido.status.includes('Pagamento confirmado')
   );
   
   if (pedidosPagos.length === 0) {
@@ -581,7 +581,7 @@ function baixarNotaFiscalIndividual(codigo) {
       <div style="margin-bottom: 15px;">
         <p><strong>Pedido:</strong> #${pedido.codigo}</p>
         <p><strong>Data:</strong> ${pedido.data}</p>
-        <p><strong>Status:</strong> ✅ Pagamento confirmado</p>
+        <p><strong>Status:</strong> Pagamento confirmado</p>
       </div>
 
       <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
