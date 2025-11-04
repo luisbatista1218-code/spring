@@ -464,7 +464,7 @@ function gerarNotaFiscal(pedido) {
       subtotal: pedido.produtos.reduce((sum, item) => sum + (item.preco * item.qtd), 0),
       total: pedido.total
     },
-    status: pedido.status,
+    status: "✅ Pagamento confirmado",
     comprovante: pedido.comprovante ? "Enviado" : "Não enviado"
   };
 }
