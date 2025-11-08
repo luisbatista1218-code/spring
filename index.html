@@ -49,7 +49,7 @@
   <button onclick="goBack()">← Voltar</button>
   <button onclick="openContact()">Contato</button>
   <strong>Delivery</strong>
-  <button onclick="exportarNotaFiscal()">📄 Nota Fiscal</button>
+  <button onclick="showHelp()">❓️Ajude-me</button>
 </div>
 
 <div class="main">
@@ -317,6 +317,92 @@ function addNotification() {
   unreadNotifications++;
   updateNotificationCounter();
 }
+
+function showHelp(){
+  currentView = 'help-main';
+  
+  const html = `
+    <div class='card'>
+      <h3>📚 Central de Ajuda</h3>
+      <p>Escolha uma categoria para ver as instruções:</p>
+      
+      <div class='category-item' onclick='showHelpCategory("categorias")'>
+        <h4 style='margin:0'>🏷️ Como usar Categorias</h4>
+      </div>
+      
+      <div class='category-item' onclick='showHelpCategory("carrinho")'>
+        <h4 style='margin:0'>🛒 Como usar o Carrinho</h4>
+      </div>
+      
+      <div class='category-item' onclick='showHelpCategory("notificacoes")'>
+        <h4 style='margin:0'>📱 Notificações e Pedidos</h4>
+      </div>
+      
+      <div class='category-item' onclick='showHelpCategory("pagamento")'>
+        <h4 style='margin:0'>💳 Processo de Pagamento</h4>
+      </div>
+      
+      <div class='category-item' onclick='showHelpCategory("contato")'>
+        <h4 style='margin:0'>📞 Contato e Suporte</h4>
+      </div>
+    </div>`;
+  
+  document.getElementById('view').innerHTML = html;
+  }
+
+function showHelpCategory(categoria){
+  currentView = 'help-category';
+  
+  const conteudos = {
+    categorias: {
+      titulo: "🏷️ Como usar Categorias",
+      texto: `1. <strong>Navegação</strong>: Toque em "Categoria" no menu inferior para ver todas as categorias disponíveis.<br><br>
+2. <strong>Seleção</strong>: Escolha uma categoria como "Pizza", "Bebidas" ou "Sobremesas".<br><br>
+3. <strong>Produtos</strong>: Dentro de cada categoria, você verá todos os produtos disponíveis com foto, descrição e preço.<br><br>
+4. <strong>Adicionar</strong>: Toque em "Adicionar ao Carrinho" para incluir o produto no seu pedido.`
+    },
+    carrinho: {
+      titulo: "🛒 Como usar o Carrinho",
+      texto: `1. <strong>Acesso</strong>: Toque em "Carrinho" no menu inferior para ver seus itens.<br><br>
+2. <strong>Quantidade</strong>: Use os botões "+" e "-" para ajustar as quantidades.<br><br>
+3. <strong>Remover</strong>: Diminua a quantidade para zero para remover um item.<br><br>
+4. <strong>Finalizar</strong>: Toque em "Finalizar Pedido" quando estiver pronto para pagar.<br><br>
+5. <strong>Limpar</strong>: Use "Limpar Carrinho" para remover todos os itens.`
+    },
+    notificacoes: {
+      titulo: "📱 Notificações e Pedidos",
+      texto: `1. <strong>Acompanhamento</strong>: Toque em "Notificações" para ver o status dos seus pedidos.<br><br>
+2. <strong>Status</strong>: Acompanhe cada etapa: recebido, em preparo, saiu para entrega, entregue.<br><br>
+3. <strong>Nota Fiscal</strong>: Pedidos com pagamento confirmado permitem baixar a nota fiscal.<br><br>
+4. <strong>Badge</strong>: O número vermelho indica novas notificações não lidas.`
+    },
+    pagamento: {
+      titulo: "💳 Processo de Pagamento",
+      texto: `1. <strong>Localização</strong>: O app detecta automaticamente seu endereço via GPS.<br><br>
+2. <strong>Dados</strong>: Confirme ou edite o endereço e informe seu telefone.<br><br>
+3. <strong>PIX</strong>: Você receberá a chave PIX e valor exato para pagamento.<br><br>
+4. <strong>Comprovante</strong>: Envie foto ou PDF do comprovante pelo próprio app.<br><br>
+5. <strong>Confirmação</strong>: Após análise, seu pedido será confirmado.`
+    },
+    contato: {
+      titulo: "📞 Contato e Suporte",
+      texto: `1. <strong>Telefone</strong>: (11) 99999-9999 para emergências<br><br>
+2. <strong>WhatsApp</strong>: Use o mesmo número para mensagens<br><br>
+3. <strong>Email</strong>: contato@delivery.com para dúvidas<br><br>
+4. <strong>PIX</strong>: Chave 123.456.789-00 para pagamentos<br><br>
+5. <strong>Horário</strong>: Atendimento das 10h às 22h`
+    }
+  };
+  
+  const html = `
+    <div class='card'>
+      <b>${conteudos[categoria].titulo}</b>
+      <div>${conteudos[categoria].texto}</div>
+      <button class="btn" onclick="showHelp()" style="margin-top: 10px;">← Voltar à Ajuda</button>
+    </div>`;
+  
+  document.getElementById('view').innerHTML = html;
+  }
 
 async function sendTelegramNotification(pedido) {
   const inlineKeyboard = {
@@ -996,7 +1082,8 @@ window.clearCart = clearCart;
 window.startCheckout = startCheckout;
 window.openContact = openContact;
 window.goBack = goBack;
-window.exportarNotaFiscal = exportarNotaFiscal;
+window.showHelp = showHelp;
+window.showHelpCategory = showHelpCategory;
 window.baixarNotaFiscalIndividual = baixarNotaFiscalIndividual;
 
 loadFromStorage();
