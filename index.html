@@ -618,6 +618,11 @@ function goBack(){
     showCart();
     return;
   }
+
+else if(currentView === 'cart') {
+    showCategories();
+    return;
+}
 else if(currentView === 'categories' || currentView === 'category-products' || currentView === 'cart' || currentView === 'notifs'){
     showHome();
   } else if(currentView === 'product-list'){
