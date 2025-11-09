@@ -741,12 +741,18 @@ function addToCart(id){
   let p = products.find(x => x.id === id);
   if (!p) return;
 
-  // Verificar estoque
+  // Verificar se produto está esgotado
+  if (p.estoque <= 0) {
+    alert(`❌ PRODUTO ESGOTADO!`);
+    return;
+  }
+
   let itemNoCarrinho = cart.find(c => c.id === id);
   let quantidadeTotal = itemNoCarrinho ? itemNoCarrinho.qtd + 1 : 1;
   
+  // Verificar estoque insuficiente
   if (p.estoque < quantidadeTotal) {
-    alert(`❌ Estoque insuficiente! Só temos ${p.estoque} unidades.`);
+    alert(`❌ Estoque insuficiente!`);
     return;
   }
   
