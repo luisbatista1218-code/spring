@@ -83,67 +83,58 @@ let products = [
   {id:2,categoria:"Bebidas",nome:"Coca de 2 litros",descricao:"Refrigerante coca cola de 2 litros",preco:12.00,imagem:"coca-grande.jpg"}
 ];
 
-// Carregar estoque quando abrir o site
-buscarEstoque().then(estoque => {
-  products.forEach(p => {
-    p.estoque = estoque[p.id] || 10;
-  });
-});
-//fim
 let lastUpdateId = 0;
 let messageIds = {};
 let processedCommands = new Set();
 let lastLocalizacaoData = null;
 
-// JSONBIN - NOVAS CREDENCIS (SÓ MUDA ISSO)
+// JSONBin.io - Estoque Online
 const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6910d315d0ea881f40ddea9c';
 const JSONBIN_KEY = '$2a$10$xRr/R9Ugm0qvCxAlxFcH6elkx1CFYmeGh8vDQV1T7YQYTtCFwbrna';
 
-// Buscar estoque
-async function buscarEstoque() {
+// Buscar estoque do JSONBin
+async function carregarEstoqueJSONBin() {
   try {
     const response = await fetch(JSONBIN_URL + '/latest', {
-      headers: { 
-        'X-Master-Key': JSONBIN_KEY,
-        'X-Bin-Meta': 'false'
-      }
+      headers: { 'X-Master-Key': JSONBIN_KEY }
     });
-    
-    if (!response.ok) throw new Error('Erro JSONBin');
     const data = await response.json();
-    return data;
+    console.log('✅ Estoque carregado:', data.record);
+    return data.record;
   } catch (error) {
-    console.log('JSONBin offline, usando local');
-    return {1: 10, 2: 10};
+    console.log('❌ Erro ao carregar estoque:', error);
+    return {1: 10, 2: 20}; // Estoque padrão se der erro
   }
 }
 
-// Salvar estoque  
-async function salvarEstoque() {
-  const estoque = {};
-  products.forEach(p => { estoque[p.id] = p.estoque; });
-  
+// Atualizar estoque no JSONBin
+async function atualizarEstoqueJSONBin(novoEstoque) {
   try {
-    await fetch(JSONBIN_URL, {
+    const response = await fetch(JSONBIN_URL, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'X-Master-Key': JSONBIN_KEY
       },
-      body: JSON.stringify(estoque)
+      body: JSON.stringify(novoEstoque)
     });
+    const data = await response.json();
+    console.log('✅ Estoque atualizado no JSONBin!');
+    return data;
   } catch (error) {
-    console.log('Erro ao salvar no JSONBin');
+    console.log('❌ Erro ao atualizar estoque:', error);
   }
 }
 
-// Carregar estoque quando abrir o site
-buscarEstoque().then(estoque => {
+// Carregar estoque ao iniciar
+carregarEstoqueJSONBin().then(estoque => {
   products.forEach(p => {
     p.estoque = estoque[p.id] || 10;
   });
+  console.log('📦 Produtos com estoque carregado');
 });
-//fim
+  
+
 async function checkTelegramUpdates() {
   try {
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`;
@@ -766,7 +757,10 @@ function addToCart(id){
     alert(`❌ Estoque insuficiente! Só temos ${p.estoque} unidades.`);
     return;
   }
-  
+  // Depois de atualizar o estoque
+const estoqueAtual = {};
+products.forEach(p => { estoqueAtual[p.id] = p.estoque; });
+atualizarEstoqueJSONBin(estoqueAtual);
   // Adicionar ao carrinho
   if (itemNoCarrinho) {
     itemNoCarrinho.qtd++;
