@@ -820,10 +820,11 @@ function incQty(id){
   if(item){ 
   // verifica estoque
     let p = products.find(x => x.id === id);
-    if (p && item.qtd >= p.estoque) {
+    
+    if (p && p.estoque < (item.qtd + 1)) {
       alert(`❌ Estoque insuficiente!`);
       return;
-    }
+  }
    //fim 
     item.qtd++; 
     saveToStorage();
