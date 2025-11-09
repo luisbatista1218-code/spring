@@ -816,6 +816,13 @@ function showCart(){
 function incQty(id){ 
   let item = cart.find(c => c.id === id); 
   if(item){ 
+  // verifica estoque
+      let p = products.find(x => x.id === id);
+    if (p && p.estoque <= item.qtd) {
+      alert(`❌ Estoque insuficiente!`);
+      return;
+    }  
+   //fim 
     item.qtd++; 
     saveToStorage();
     showCart(); 
