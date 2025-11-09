@@ -82,56 +82,46 @@ let products = [
   {id:1,categoria:"Pizza",nome:"Pizza Calabresa",descricao:"Pizza com borda de requeijão",preco:30.00,imagem:"pizza-calabresa.jpg"},
   {id:2,categoria:"Bebidas",nome:"Coca de 2 litros",descricao:"Refrigerante coca cola de 2 litros",preco:12.00,imagem:"coca-grande.jpg"}
 ];
+
+// Carregar estoque quando abrir o site
+buscarEstoque().then(estoque => {
+  products.forEach(p => {
+    p.estoque = estoque[p.id] || 10;
+  });
+});
+//fim
 let lastUpdateId = 0;
 let messageIds = {};
 let processedCommands = new Set();
 let lastLocalizacaoData = null;
 
-// JSONBin.io - Estoque Online
+// JSONBin.io - Fácil e Rápido
 const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6910ba0ad0ea881f40ddc4dd';
 const JSONBIN_KEY = '$2a$10$xRr/R9Ugm0qvCxAlxFcH6elkx1CFYmeGh8vDQV1T7YQYTtCFwbrna';
 
-// Buscar estoque do JSONBin
-async function carregarEstoqueJSONBin() {
-  try {
-    const response = await fetch(JSONBIN_URL + '/latest', {
-      headers: { 'X-Master-Key': JSONBIN_KEY }
-    });
-    const data = await response.json();
-    return data.record;
-  } catch (error) {
-    console.log('Erro ao carregar estoque:', error);
-    return {1: 10, 2: 20};
-  }
+// Buscar estoque
+async function buscarEstoque() {
+  const response = await fetch(JSONBIN_URL + '/latest', {
+    headers: { 'X-Master-Key': JSONBIN_KEY }
+  });
+  const data = await response.json();
+  return data.record;
 }
 
-// Atualizar estoque no JSONBin
-async function atualizarEstoqueJSONBin() {
-  try {
-    const estoqueAtual = {};
-    products.forEach(prod => {
-      estoqueAtual[prod.id] = prod.estoque;
-    });
-    
-    await fetch(JSONBIN_URL, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': JSONBIN_KEY
-      },
-      body: JSON.stringify(estoqueAtual)
-    });
-  } catch (error) {
-    console.log('Erro ao atualizar estoque:', error);
-  }
-  }
-
- carregarEstoqueJSONBin().then(estoque => {
-  products.forEach(p => {
-    p.estoque = estoque[p.id] || 10;
-  });
-}); 
+// Salvar estoque  
+async function salvarEstoque() {
+  const estoque = {};
+  products.forEach(p => { estoque[p.id] = p.estoque; });
   
+  await fetch(JSONBIN_URL, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': JSONBIN_KEY
+    },
+    body: JSON.stringify(estoque)
+  });
+}
 //fim
 
 async function checkTelegramUpdates() {
@@ -1067,17 +1057,9 @@ function showUploadComprovante(localizacaoData, descricao) {
   
   window.finalizarPedidoComComprovante = async function(localizacao, descricao, mapaUrl, whatsapp) {
     if (!selectedFile) {
-   //começo
-      pedido.produtos.forEach(item => {
-  const produto = products.find(p => p.id === item.id);
-  if (produto) {
-    produto.estoque -= item.qtd;
-  }
-});
-
-// Atualizar JSONBin
-await atualizarEstoqueJSONBin(); 
-    //fim  
+//inicio
+await salvarEstoque();
+//fim
       alert('❌ Selecione um arquivo de comprovante primeiro!');
       return;
     }
