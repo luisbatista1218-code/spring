@@ -67,23 +67,6 @@
 </div>
 <script>
 
-//começo
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCxVSVZd55FQOSX2lyZbRkEFuc_Pxlb988",
-    authDomain: "stoke-d5823.firebaseapp.com",
-    projectId: "stoke-d5823",
-    storageBucket: "stoke-d5823.firebasestorage.app",
-    messagingSenderId: "736701235697",
-    appId: "1:736701235697:web:ee2d88e40ef28f30480450"
-  };
-  firebase.initializeApp(firebaseConfig);
-  window.db = firebase.firestore();
-</script
-//fim
 const BOT_TOKEN = '8205702578:AAFw4c3aRUR5oDDhH5WWAdOctM9rPLOIHac';
 const CHAT_ID = '1232955171';
 const STORAGE_KEY = 'delivery_app_data';
@@ -104,53 +87,6 @@ let messageIds = {};
 let processedCommands = new Set();
 let lastLocalizacaoData = null;
 
-// Depois de definir os produtos (começo)
-inicializarEstoque().then(() => {
-  carregarEstoqueFirebase().then(estoque => {
-    products.forEach(p => {
-      p.estoque = estoque[p.id] || 10;
-    });
-  });
-});
-
-// Criar estoque automaticamente se não existir
-async function inicializarEstoque() {
-  try {
-    const doc = await db.collection('estoque').doc('principal').get();
-    if (!doc.exists) {
-      await db.collection('estoque').doc('principal').set({
-        '1': 10,  // Pizza Calabresa
-        '2': 20   // Coca 2L
-      });
-      console.log('✅ Estoque criado no Firebase!');
-    }
-  } catch (error) {
-    console.log('❌ Erro ao criar estoque:', error);
-  }
-}
-
-// Buscar estoque do Firebase
-async function carregarEstoqueFirebase() {
-  try {
-    const doc = await db.collection('estoque').doc('principal').get();
-    return doc.exists ? doc.data() : {};
-  } catch (error) {
-    console.log('Erro ao carregar estoque:', error);
-    return {};
-  }
-}
-
-// Atualizar estoque no Firebase
-async function atualizarEstoqueFirebase(id, novoEstoque) {
-  try {
-    await db.collection('estoque').doc('principal').update({
-      [id]: novoEstoque
-    });
-  } catch (error) {
-    console.log('Erro ao atualizar estoque:', error);
-  }
-}
-// fim
 async function checkTelegramUpdates() {
   try {
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`;
@@ -744,14 +680,6 @@ function showCategoryProducts(categoryName){
 function addToCart(id){
   let p = products.find(x => x.id === id);
   if (!p) return;
-// pega banco
-  if (p.estoque <= 0) {
-    alert('❌ Estoque insuficiente!');
-    return;
-  }
-  
-  p.estoque--;
-  atualizarEstoqueFirebase(p.id, p.estoque); // ← ATUALIZA FIREBASE
   
   let item = cart.find(c => c.id === id);
   if (item) {
