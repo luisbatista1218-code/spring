@@ -92,15 +92,17 @@ async function carregarEstoque() {
     const response = await fetch(API_URL);
     const estoque = await response.json();
     products.forEach(p => {
-      p.estoque = estoque[p.id] || 10;
+      p.estoque = 10; // ⬅️ FORÇA SEMPRE 10!
     });
+    
+    // Atualiza o servidor também
+    salvarEstoque();
   } catch (error) {
-    console.log('Erro API, usando estoque local');
     products.forEach(p => {
       p.estoque = 10;
     });
   }
-}
+  }
 
 // Salvar estoque
 async function salvarEstoque() {
