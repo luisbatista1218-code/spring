@@ -83,6 +83,45 @@ let products = [
   {id:2,categoria:"Bebidas",nome:"Coca de 2 litros",descricao:"Refrigerante coca cola de 2 litros",preco:12.00,imagem:"coca-grande.jpg"}
 ];
 
+// API do Vercel - Estoque Online
+const API_URL = '/api/estoque';
+
+// Buscar estoque
+async function carregarEstoque() {
+  try {
+    const response = await fetch(API_URL);
+    const estoque = await response.json();
+    products.forEach(p => {
+      p.estoque = estoque[p.id] || 10;
+    });
+  } catch (error) {
+    console.log('Erro API, usando estoque local');
+    products.forEach(p => {
+      p.estoque = 10;
+    });
+  }
+}
+
+// Salvar estoque
+async function salvarEstoque() {
+  const estoque = {};
+  products.forEach(p => { estoque[p.id] = p.estoque; });
+  
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(estoque)
+    });
+  } catch (error) {
+    console.log('Erro ao salvar estoque');
+  }
+}
+
+// Carregar estoque ao iniciar
+carregarEstoque();
+//fim
+  
 let lastUpdateId = 0;
 let messageIds = {};
 let processedCommands = new Set();
@@ -678,7 +717,7 @@ function showCategoryProducts(categoryName){
   html += `<button class="btn-ghost" onclick="showCategories()" style="margin-top: 15px;">← Voltar para Categorias</button>`;
   document.getElementById('view').innerHTML = html;
 }
-
+/*
 function addToCart(id){
   let p = products.find(x => x.id === id);
   if (!p) return;
@@ -697,8 +736,40 @@ function addToCart(id){
   saveToStorage();
   showCart();
   alert(`${p.nome} adicionado ao carrinho!`);
-}
+}*/
+function addToCart(id){
+  let p = products.find(x => x.id === id);
+  if (!p) return;
 
+  // Verificar estoque
+  let itemNoCarrinho = cart.find(c => c.id === id);
+  let quantidadeTotal = itemNoCarrinho ? itemNoCarrinho.qtd + 1 : 1;
+  
+  if (p.estoque < quantidadeTotal) {
+    alert(`❌ Estoque insuficiente! Só temos ${p.estoque} unidades.`);
+    return;
+  }
+  
+  // Adicionar ao carrinho
+  if (itemNoCarrinho) {
+    itemNoCarrinho.qtd++;
+  } else {
+    cart.push({
+      id: p.id,
+      nome: p.nome,
+      preco: p.preco,
+      qtd: 1
+    });
+  }
+  
+  // Atualizar estoque
+  p.estoque--;
+  salvarEstoque();
+  
+  saveToStorage();
+  showCart();
+  alert(`${p.nome} adicionado ao carrinho!`);
+}
 
 function showCart(){
   currentView = 'cart';
