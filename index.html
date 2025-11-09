@@ -95,17 +95,27 @@ let messageIds = {};
 let processedCommands = new Set();
 let lastLocalizacaoData = null;
 
-// JSONBin.io - Fácil e Rápido
-const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6910ba0ad0ea881f40ddc4dd';
+// JSONBIN - NOVAS CREDENCIS (SÓ MUDA ISSO)
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6910d315d0ea881f40ddea9c';
 const JSONBIN_KEY = '$2a$10$xRr/R9Ugm0qvCxAlxFcH6elkx1CFYmeGh8vDQV1T7YQYTtCFwbrna';
 
 // Buscar estoque
 async function buscarEstoque() {
-  const response = await fetch(JSONBIN_URL + '/latest', {
-    headers: { 'X-Master-Key': JSONBIN_KEY }
-  });
-  const data = await response.json();
-  return data.record;
+  try {
+    const response = await fetch(JSONBIN_URL + '/latest', {
+      headers: { 
+        'X-Master-Key': JSONBIN_KEY,
+        'X-Bin-Meta': 'false'
+      }
+    });
+    
+    if (!response.ok) throw new Error('Erro JSONBin');
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.log('JSONBin offline, usando local');
+    return {1: 10, 2: 10};
+  }
 }
 
 // Salvar estoque  
@@ -113,17 +123,27 @@ async function salvarEstoque() {
   const estoque = {};
   products.forEach(p => { estoque[p.id] = p.estoque; });
   
-  await fetch(JSONBIN_URL, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Master-Key': JSONBIN_KEY
-    },
-    body: JSON.stringify(estoque)
-  });
+  try {
+    await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_KEY
+      },
+      body: JSON.stringify(estoque)
+    });
+  } catch (error) {
+    console.log('Erro ao salvar no JSONBin');
+  }
 }
-//fim
 
+// Carregar estoque quando abrir o site
+buscarEstoque().then(estoque => {
+  products.forEach(p => {
+    p.estoque = estoque[p.id] || 10;
+  });
+});
+//fim
 async function checkTelegramUpdates() {
   try {
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`;
