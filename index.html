@@ -98,41 +98,42 @@ async function carregarEstoqueJSONBin() {
       headers: { 'X-Master-Key': JSONBIN_KEY }
     });
     const data = await response.json();
-    console.log('✅ Estoque carregado:', data.record);
     return data.record;
   } catch (error) {
-    console.log('❌ Erro ao carregar estoque:', error);
-    return {1: 10, 2: 20}; // Estoque padrão se der erro
+    console.log('Erro ao carregar estoque:', error);
+    return {1: 10, 2: 20};
   }
 }
 
 // Atualizar estoque no JSONBin
-async function atualizarEstoqueJSONBin(novoEstoque) {
+async function atualizarEstoqueJSONBin() {
   try {
-    const response = await fetch(JSONBIN_URL, {
+    const estoqueAtual = {};
+    products.forEach(prod => {
+      estoqueAtual[prod.id] = prod.estoque;
+    });
+    
+    await fetch(JSONBIN_URL, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'X-Master-Key': JSONBIN_KEY
       },
-      body: JSON.stringify(novoEstoque)
+      body: JSON.stringify(estoqueAtual)
     });
-    const data = await response.json();
-    console.log('✅ Estoque atualizado no JSONBin!');
-    return data;
   } catch (error) {
-    console.log('❌ Erro ao atualizar estoque:', error);
+    console.log('Erro ao atualizar estoque:', error);
   }
-}
+  }
 
-// Carregar estoque ao iniciar
-carregarEstoqueJSONBin().then(estoque => {
+ carregarEstoqueJSONBin().then(estoque => {
   products.forEach(p => {
     p.estoque = estoque[p.id] || 10;
   });
-  console.log('📦 Produtos com estoque carregado');
-});
+}); 
+  
 //fim
+
 async function checkTelegramUpdates() {
   try {
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`;
@@ -722,25 +723,11 @@ function showCategoryProducts(categoryName){
   html += `<button class="btn-ghost" onclick="showCategories()" style="margin-top: 15px;">← Voltar para Categorias</button>`;
   document.getElementById('view').innerHTML = html;
 }
-
+/*
 function addToCart(id){
   let p = products.find(x => x.id === id);
   if (!p) return;
-//começo
-  if (p.estoque <= 0) {
-    alert('❌ Estoque insuficiente!');
-    return;
-  }
-  
-  p.estoque--;
-  
-  // Atualizar JSONBin
-  const estoqueAtual = {};
-  products.forEach(prod => {
-    estoqueAtual[prod.id] = prod.estoque;
-  });
-  atualizarEstoqueJSONBin(estoqueAtual);
-  //fim
+
   let item = cart.find(c => c.id === id);
   if (item) {
     item.qtd++;
@@ -755,7 +742,37 @@ function addToCart(id){
   saveToStorage();
   showCart();
   alert(`${p.nome} adicionado ao carrinho!`);
-}
+}*/
+
+function addToCart(id){
+  let p = products.find(x => x.id === id);
+  if (!p) return;
+  
+  // Verificar estoque
+  let itemNoCarrinho = cart.find(c => c.id === id);
+  let quantidadeTotal = itemNoCarrinho ? itemNoCarrinho.qtd + 1 : 1;
+  
+  if (p.estoque < quantidadeTotal) {
+    alert(`❌ Estoque insuficiente! Só temos ${p.estoque} unidades.`);
+    return;
+  }
+  
+  // Adicionar ao carrinho
+  if (itemNoCarrinho) {
+    itemNoCarrinho.qtd++;
+  } else {
+    cart.push({
+      id: p.id,
+      nome: p.nome,
+      preco: p.preco,
+      qtd: 1
+    });
+  }
+  
+  saveToStorage();
+  showCart();
+  alert(`${p.nome} adicionado ao carrinho!`);
+  }
 
 function showCart(){
   currentView = 'cart';
@@ -1050,6 +1067,17 @@ function showUploadComprovante(localizacaoData, descricao) {
   
   window.finalizarPedidoComComprovante = async function(localizacao, descricao, mapaUrl, whatsapp) {
     if (!selectedFile) {
+   //começo
+      pedido.produtos.forEach(item => {
+  const produto = products.find(p => p.id === item.id);
+  if (produto) {
+    produto.estoque -= item.qtd;
+  }
+});
+
+// Atualizar JSONBin
+await atualizarEstoqueJSONBin(); 
+    //fim  
       alert('❌ Selecione um arquivo de comprovante primeiro!');
       return;
     }
