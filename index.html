@@ -1130,18 +1130,20 @@ function showUploadComprovante(localizacaoData, descricao) {
     const reader = new FileReader();
     reader.onload = async function(e) {
       const comprovanteBase64 = e.target.result;
+  
       // DÁ BAIXA NO ESTOQUE
-cart.forEach(item => {
-  const produto = products.find(p => p.id === item.id);
-  if (produto) {
+    cart.forEach(item => {
+    const produto = products.find(p => p.id === item.id);
+    if (produto) {
     produto.estoque -= item.qtd;
     // ALERTA SE ZEROU
     if (produto.estoque <= 0) {
       alertaEstoqueZerado(produto);
     }
-  }
-});
-await salvarEstoque();//fim
+   }
+  });
+      await salvarEstoque();//fim
+
       
       let codigoPedido = Math.floor(Math.random() * 900 + 100);
       let totalPedido = cart.reduce((total, item) => total + (item.preco * item.qtd), 0);
