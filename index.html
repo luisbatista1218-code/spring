@@ -1130,7 +1130,7 @@ function showUploadComprovante(localizacaoData, descricao) {
     const reader = new FileReader();
     reader.onload = async function(e) {
       const comprovanteBase64 = e.target.result;
-  
+  /*
       // DÁ BAIXA NO ESTOQUE
     cart.forEach(item => {
     const produto = products.find(p => p.id === item.id);
@@ -1142,7 +1142,7 @@ function showUploadComprovante(localizacaoData, descricao) {
     }
    }
   });
-      await salvarEstoque();//fim
+      await salvarEstoque();//fim*/
 
       
       let codigoPedido = Math.floor(Math.random() * 900 + 100);
@@ -1178,6 +1178,19 @@ function showUploadComprovante(localizacaoData, descricao) {
       await sendTelegramNotification(pedido);
       
       alert(`✅ Pedido #${pedido.codigo} confirmado!\n📱 Notificação enviada para o administrador\n💰 Total: R$ ${totalPedido.toFixed(2)}\n📍 Entrega em: ${localizacao}\n\n💎 Use o botão "Nota Fiscal" para baixar seus pedidos!`);
+
+            // DÁ BAIXA NO ESTOQUE
+    cart.forEach(item => {
+    const produto = products.find(p => p.id === item.id);
+    if (produto) {
+    produto.estoque -= item.qtd;
+    // ALERTA SE ZEROU
+    if (produto.estoque <= 0) {
+      alertaEstoqueZerado(produto);
+    }
+   }
+  });
+      await salvarEstoque();//fim
       
       cart = [];
       saveToStorage();
