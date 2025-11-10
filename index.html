@@ -707,6 +707,11 @@ function baixarNotaFiscalIndividual(codigo) {
   }
   
 function goBack(){
+  if (currentView === 'help-main' || currentView === 'help-category') {
+  showHome();
+  return;
+ }
+  
   if (currentView === 'checkout') {
     if (lastLocalizacaoData) {
       showDadosEntrega({
@@ -981,7 +986,6 @@ function showDadosEntrega(localizacaoData) {
         
         <div style="margin-top: 15px;">
           <button type="submit" class="btn">Continuar para Pagamento</button>
-          <button type="button" class="btn-ghost" onclick="goback()">← Voltar</button>
         </div>
       </form>
     </div>
