@@ -780,17 +780,7 @@ function showCategoryProducts(categoryName){
   html += `<button class="btn-ghost" onclick="showCategories()" style="margin-top: 15px;">← Voltar para Categorias</button>`;
   document.getElementById('view').innerHTML = html;
 }
-    cart.push({
-      id: p.id,
-      nome: p.nome,
-      preco: p.preco,
-      qtd: 1
-    });
-  }
-  saveToStorage();
-  showCart();
-  alert(`${p.nome} adicionado ao carrinho!`);
-}*/
+
 function addToCart(id){
   let p = products.find(x => x.id === id);
   if (!p) return;
