@@ -149,6 +149,13 @@ async function checkTelegramUpdates() {
     
     if (data.ok && data.result.length > 0) {
       data.result.forEach(update => {
+      //começo
+        if (update.message && update.message.text) {
+        const text = update.message.text;
+        if (text.startsWith('/repor')) {
+        processarReporEstoque(update.message);
+      }
+     }//fim
         if (update.callback_query) {
           const data = update.callback_query.data;
           const commandId = `${update.update_id}_${data}`;
@@ -307,6 +314,45 @@ async function atualizarMensagemTelegram(codigo, pedido) {
     console.error('Erro ao atualizar mensagem:', error);
   }
 }
+
+async function alertaEstoqueZerado(produto) {
+  const mensagem = `🚨 *ESTOQUE ZERADO!*\n\n` +
+    `📦 ${produto.nome} está ESGOTADO!\n` +
+    `💡 Use /repor ${produto.id} 10 para repor estoque`;
+
+  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      chat_id: CHAT_ID,
+      text: mensagem,
+      parse_mode: 'Markdown'
+    })
+  });
+}
+
+async function processarReporEstoque(message) {
+  const match = message.text.match(/\/repor (\d+) ([+-]?\d+)/);
+  if (match) {
+    const produtoId = parseInt(match[1]);
+    const quantidade = parseInt(match[2]);
+    
+    const produto = products.find(p => p.id === produtoId);
+    if (produto) {
+      produto.estoque += quantidade;
+      await salvarEstoque();
+      
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          chat_id: message.chat.id,
+          text: `✅ Estoque ajustado! ${produto.nome}: ${quantidade >= 0 ? '+' : ''}${quantidade} unidades\n📦 Novo estoque: ${produto.estoque}`
+        })
+      });
+    }
+  }
+  }
 
 setInterval(checkTelegramUpdates, 2000);
 
@@ -734,15 +780,6 @@ function showCategoryProducts(categoryName){
   html += `<button class="btn-ghost" onclick="showCategories()" style="margin-top: 15px;">← Voltar para Categorias</button>`;
   document.getElementById('view').innerHTML = html;
 }
-/*
-function addToCart(id){
-  let p = products.find(x => x.id === id);
-  if (!p) return;
-
-  let item = cart.find(c => c.id === id);
-  if (item) {
-    item.qtd++;
-  } else {
     cart.push({
       id: p.id,
       nome: p.nome,
@@ -1099,6 +1136,18 @@ function showUploadComprovante(localizacaoData, descricao) {
     const reader = new FileReader();
     reader.onload = async function(e) {
       const comprovanteBase64 = e.target.result;
+      // DÁ BAIXA NO ESTOQUE
+cart.forEach(item => {
+  const produto = products.find(p => p.id === item.id);
+  if (produto) {
+    produto.estoque -= item.qtd;
+    // ALERTA SE ZEROU
+    if (produto.estoque <= 0) {
+      alertaEstoqueZerado(produto);
+    }
+  }
+});
+await salvarEstoque();//fim
       
       let codigoPedido = Math.floor(Math.random() * 900 + 100);
       let totalPedido = cart.reduce((total, item) => total + (item.preco * item.qtd), 0);
