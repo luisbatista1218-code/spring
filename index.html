@@ -128,7 +128,18 @@ let lastUpdateId = 0;
 let messageIds = {};
 let processedCommands = new Set();
 let lastLocalizacaoData = null;
+let cartTimeout;
 
+function iniciarTimeoutCarrinho() {
+  if (cartTimeout) clearTimeout(cartTimeout);
+  cartTimeout = setTimeout(() => {
+    if (cart.length > 0 && confirm('Carrinho expirou após 10 minutos. Limpar?')) {
+      cart = [];
+      saveToStorage();
+      showCart();
+    }
+  }, 600000);
+  }
 
 async function checkTelegramUpdates() {
   try {
@@ -312,6 +323,10 @@ function loadFromStorage() {
         orders = data.orders || [];
         unreadNotifications = data.unreadNotifications || 0;
         updateNotificationCounter();
+        //limpar carrinho depois de 10 min
+        if (cart.length > 0) {
+        iniciarTimeoutCarrinho();
+      }//fim
       } else {
         clearStorage();
       }
@@ -773,7 +788,8 @@ function addToCart(id){
   saveToStorage();
   showCart();
   alert(`${p.nome} adicionado ao carrinho!`);
-  }
+  iniciarTimeoutCarrinho(); 
+}
 
 function showCart(){
   currentView = 'cart';
