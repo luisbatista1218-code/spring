@@ -102,7 +102,6 @@ async function carregarEstoque() {
   }
   }
 
-// Salvar estoque
 async function salvarEstoque() {
   const estoque = {};
   products.forEach(p => { estoque[p.id] = p.estoque; });
@@ -153,12 +152,12 @@ async function checkTelegramUpdates() {
         if (text.startsWith('/repor')) {
         processarReporEstoque(update.message);
       }
-     }//fim
+     //fim
      //começo
         if (text.startsWith('/list')) {
     processarListEstoque(update.message);
-     }//fim 
-       
+     }
+    }//fim    
         if (update.callback_query) {
           const data = update.callback_query.data;
           const commandId = `${update.update_id}_${data}`;
