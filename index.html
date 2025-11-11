@@ -92,11 +92,9 @@ async function carregarEstoque() {
     const response = await fetch(API_URL);
     const estoque = await response.json();
     products.forEach(p => {
-      p.estoque = 10; // ⬅️ FORÇA SEMPRE 10!
+      p.estoque = estoque[p.id] || 10;
     });
     
-    // Atualiza o servidor também
-    salvarEstoque();
   } catch (error) {
     products.forEach(p => {
       p.estoque = 10;
@@ -156,6 +154,11 @@ async function checkTelegramUpdates() {
         processarReporEstoque(update.message);
       }
      }//fim
+     //começo
+        if (text.startsWith('/list')) {
+    processarListEstoque(update.message);
+     }//fim 
+       
         if (update.callback_query) {
           const data = update.callback_query.data;
           const commandId = `${update.update_id}_${data}`;
@@ -352,6 +355,23 @@ async function processarReporEstoque(message) {
       });
     }
   }
+  }
+
+async function processarListEstoque(message) {
+  const estoqueMsg = `📦 *ESTOQUE ATUAL*\n\n` +
+    products.map(p => 
+      `• ${p.nome}: ${p.estoque} unidades`
+    ).join('\n');
+
+  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      chat_id: message.chat.id,
+      text: estoqueMsg,
+      parse_mode: 'Markdown'
+    })
+  });
   }
 
 setInterval(checkTelegramUpdates, 2000);
